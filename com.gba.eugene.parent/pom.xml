@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  
+  <groupId>com.gba.eugene</groupId>
+  <artifactId>com.gba.eugene.parent</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>com.gba.eugene.parent</name>
+  
+  <properties>
+      <!--> H <-->
+      <eugene.hikari.version>5.0.1</eugene.hikari.version>
+      <eugene.hamcrest.all.version>3.0</eugene.hamcrest.all.version>
+      <!--> J <-->
+      <eugene.junit.version>5.10.2</eugene.junit.version>
+      <!--> L <-->
+      <eugene.logback-core.version>1.5.18</eugene.logback-core.version>
+      <eugene.logback-classic.version>1.5.18</eugene.logback-classic.version>
+      <!--> L <-->
+      <eugene.postgresql.version>42.7.3</eugene.postgresql.version>
+      <!--> S <-->
+      <eugene.slf4j.version>2.1.0-alpha1</eugene.slf4j.version>
+
+      <maven.compiler.source>21</maven.compiler.source>
+      <maven.compiler.target>21</maven.compiler.target>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!--> H <-->
+            <dependency>
+                <groupId>com.zaxxer</groupId>
+                <artifactId>HikariCP</artifactId>
+                <version>${eugene.hikari.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest</artifactId>
+                <version>${eugene.hamcrest.all.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <!--> J <-->
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-api</artifactId>
+                <version>${eugene.junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <!--> L <-->
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
+                <version>${eugene.logback-core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${eugene.logback-classic.version}</version>
+            </dependency>
+
+            <!--> S <-->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${eugene.slf4j.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+
+
+
+</project>
