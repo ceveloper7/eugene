@@ -1,0 +1,34 @@
+package com.gba.eugene.kernel.model;
+
+import com.gba.eugene.kernel.util.SystemProperties;
+
+public class SystemConstants {
+
+    private static final String PropertyFile = "PropertyFile";
+    private static final String env_SYSTEM_HOME = SystemProperties.ENV_PREFIX + SystemProperties.SYSTEM_HOME;
+    private static final String SYSTEM_HOME = SystemProperties.SYSTEM_HOME;
+
+    /**
+     * PropertyFile allows to define a PropertyFile to use instead of the default $HOME/system.properties
+     * @return
+     */
+    public static String getPropertyFile() {
+        return System.getProperty(PropertyFile);
+    }
+
+    /**
+     * env.SYSTE_HOME to define the home of System server instance
+     * @return
+     */
+    public static String getEnvSystemHome() {
+        return System.getProperty(env_SYSTEM_HOME);
+    }
+
+    /**
+     * SYSTEM_HOME to define the home of System server instance
+     * @return
+     */
+    public static String getSystemHome() {
+        return System.getProperty(SYSTEM_HOME);
+    }
+}

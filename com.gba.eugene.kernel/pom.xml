@@ -8,13 +8,9 @@
     <relativePath>../com.gba.eugene.parent/pom.xml</relativePath>
   </parent>
 
-  <groupId>com.gba.eugene</groupId>
   <artifactId>com.gba.eugene.kernel</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
 
-  <name>com.gba.eugene.kernel</name>
-  <!-- FIXME change it to the project's website -->
-  <url>http://www.example.com</url>
 
   <properties>
     <maven.compiler.source>21</maven.compiler.source>
@@ -22,11 +18,12 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
-  <dependencyManagement>
-    <dependencies>
-
-    </dependencies>
-  </dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+  </dependencies>
 
 
 </project>
