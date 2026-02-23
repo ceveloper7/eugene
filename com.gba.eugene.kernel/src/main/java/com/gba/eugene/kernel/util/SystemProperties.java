@@ -5,6 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.Serializable;
 import java.util.Properties;
 
@@ -79,4 +81,67 @@ public final class SystemProperties implements Serializable {
 
         return env;
     } // getSystemHome
+
+    public static String getFileName(boolean tryUserHome){
+        if (SystemConstants.getPropertyFile() != null)
+            return SystemConstants.getPropertyFile();
+
+        String base = null;
+        if(tryUserHome && s_client)
+            base = System.getProperty("user.home");
+
+        if(!isClient() || base == null || base.isEmpty()){
+            String home = getSystemHome();
+            if(home != null)
+                base = home;
+        }
+
+        if (base != null && !base.endsWith(File.separator))
+            base += File.separator;
+        if (base == null)
+            base = "";
+
+        return base + SYSTEM_PROPERTY_FILE;
+    }
+
+    public static boolean loadProperties(String fileName){
+        boolean loadOk = true;
+        boolean firstTime =false;
+        s_prop= new Properties();
+        FileInputStream fis = null;
+        try{
+            fis = new FileInputStream(fileName);
+            s_prop.load(fis);
+        }
+        catch (FileNotFoundException ex){
+            log.warn(fileName + " not found");
+            loadOk = false;
+        }
+        catch (Exception ex){
+            log.error(fileName + " - " + ex.toString());
+            loadOk = false;
+        }
+        catch(Throwable t){
+            log.error(fileName + " - " + t.toString());
+            loadOk = false;
+        }
+        finally {
+            if(fis != null){
+                try{
+                    fis.close();
+                }
+                catch (Exception e){}
+            }
+        }
+
+        if(!loadOk)
+            firstTime = true;
+
+        return firstTime;
+    }
+
+    public static void loadProperties(boolean reload){
+        if(reload || s_prop.isEmpty())
+            loadProperties(getFileName(s_client));
+    }
 }
