@@ -10,17 +10,17 @@
   
   <properties>
       <!--> H <-->
-      <eugene.hikari.version>5.0.1</eugene.hikari.version>
+      <eugene.hikari.version>7.0.2</eugene.hikari.version>
       <eugene.hamcrest.all.version>3.0</eugene.hamcrest.all.version>
       <!--> J <-->
       <eugene.junit.version>5.10.2</eugene.junit.version>
       <!--> L <-->
       <eugene.logback-core.version>1.5.18</eugene.logback-core.version>
       <eugene.logback-classic.version>1.5.18</eugene.logback-classic.version>
-      <!--> L <-->
-      <eugene.postgresql.version>42.7.3</eugene.postgresql.version>
       <!--> S <-->
       <eugene.slf4j.version>2.1.0-alpha1</eugene.slf4j.version>
+      <!--> P <-->
+      <eugene.postgresql.version>42.7.3</eugene.postgresql.version>
 
       <maven.compiler.source>21</maven.compiler.source>
       <maven.compiler.target>21</maven.compiler.target>
@@ -67,6 +67,13 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>${eugene.slf4j.version}</version>
+            </dependency>
+
+            <!-- P -->
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${eugene.postgresql.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
