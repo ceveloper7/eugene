@@ -1,5 +1,6 @@
 package com.gba.eugene.kernel.db;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.SQLException;
@@ -31,6 +32,32 @@ public interface SystemDatabase {
      *  @return standard port
      */
     public int getStandardPort();
+
+    /**
+     * 	Create DataSource
+     *	@param connection connection
+     *	@return data source
+     */
+    public DataSource getDataSource(DatabaseConnection connection);
+
+    /**
+     * 	Get Cached Connection on Server
+     *	@param connection info
+     *  @param autoCommit true if autocommit connection
+     *  @param transactionIsolation transaction isolation level
+     *	@return connection or null
+     *  @throws Exception
+     */
+    public Connection getCachedConnection (DatabaseConnection connection,
+                                           boolean autoCommit, int transactionIsolation) throws Exception;
+
+
+    /**
+     *  Get Database Connection String
+     *  @param connection Connection Descriptor
+     *  @return connection String
+     */
+    public String getConnectionURL(DatabaseConnection connection);
 
     /**
      * 	Get Connection URL
