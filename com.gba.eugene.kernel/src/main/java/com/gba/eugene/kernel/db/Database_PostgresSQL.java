@@ -134,6 +134,16 @@ public class Database_PostgresSQL implements SystemDatabase{
     }
 
     @Override
+    public void close() {
+        try{
+            m_ds.close();
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    @Override
     public int getStandardPort() {
         return DATABASE_DEFAULT_PORT;
     }

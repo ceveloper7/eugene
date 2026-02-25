@@ -19,12 +19,12 @@ public final class SystemProperties implements Serializable {
     public static final String	P_CONNECTION = "Connection";
     private static final String	DEFAULT_CONNECTION = "";
 
-    /** System properties */
+    /** App properties */
     private static final String[] PROPERTIES = new String[]{
             P_CONNECTION
     };
 
-    /** System properties values */
+    /** App properties values */
     private static final String[] VALUES = new String[]{
             DEFAULT_CONNECTION
     };
@@ -33,7 +33,7 @@ public final class SystemProperties implements Serializable {
     private static String s_propertyFileName = null;
 
     private static boolean      s_client = false;
-    /** System environment prefix                                       */
+    /** App environment prefix                                       */
     public static final String  ENV_PREFIX = "env.";
 
     public static final String SYSTEM_HOME = "SYSTEM_HOME";
@@ -69,7 +69,7 @@ public final class SystemProperties implements Serializable {
     }   //  setClient
 
     /**
-     *  Get System Home from Environment
+     *  Get App Home from Environment
      *  @return systemHome or null
      */
     public static String getSystemHome(){

@@ -26,6 +26,10 @@ public interface SystemDatabase {
      */
     public Driver getDriver() throws SQLException;
 
+    /**
+     * 	Close
+     */
+    public void close();
 
     /**
      *  Get Standard JDBC Port

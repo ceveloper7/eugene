@@ -17,9 +17,9 @@ public class Secure implements SecureInterface{
 
     private static final Logger log = LoggerFactory.getLogger(Secure.class);
 
-    /** System Cipher				*/
+    /** App Cipher				*/
     private Cipher m_cipher = null;
-    /** System Key				*/
+    /** App Key				*/
     private SecretKey m_key = null;
     /** Message Digest				*/
     private MessageDigest m_md = null;

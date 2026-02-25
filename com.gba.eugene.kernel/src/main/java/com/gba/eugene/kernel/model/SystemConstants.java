@@ -18,7 +18,7 @@ public class SystemConstants {
     }
 
     /**
-     * env.SYSTE_HOME to define the home of System server instance
+     * env.SYSTE_HOME to define the home of App server instance
      * @return
      */
     public static String getEnvSystemHome() {
@@ -26,7 +26,7 @@ public class SystemConstants {
     }
 
     /**
-     * SYSTEM_HOME to define the home of System server instance
+     * SYSTEM_HOME to define the home of App server instance
      * @return
      */
     public static String getSystemHome() {

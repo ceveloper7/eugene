@@ -304,6 +304,31 @@ public class DatabaseConnection implements Serializable, Cloneable {
         return m_ds != null;
     } 	//	isDataSource
 
+    public boolean setDataSource(){
+        if(m_ds == null && SystemProperties.isClient()){
+            SystemDatabase getDB = getDatabase();
+            if(getDB != null)
+                m_ds = getDB.getDataSource(this);
+        }
+        return m_ds != null;
+    }
+
+    public boolean setDataSource(DataSource ds){
+        if(ds == null && m_ds != null)
+            getDatabase().close();
+        m_ds = ds;
+        return m_ds != null;
+    }
+
+    /**
+     *  Get DB data source
+     *  @return DataSource
+     */
+    public DataSource getDataSource ()
+    {
+        return m_ds;
+    } 	//	getDataSource
+
     /**
      *  Is PostgreSQL DB
      *  @return true if PostgreSQL
@@ -433,6 +458,28 @@ public class DatabaseConnection implements Serializable, Cloneable {
         return conn;
     }
 
+    public String getDBInfo(){
+        if(m_dbInfo != null)
+            return m_dbInfo;
+        StringBuilder sb = new StringBuilder ();
+        Connection conn = getConnection (true, Connection.TRANSACTION_READ_COMMITTED);
+        if(conn != null){
+            try{
+                DatabaseMetaData dbmd = conn.getMetaData();
+                sb.append(dbmd.getDatabaseProductVersion())
+                        .append(";").append(dbmd.getDriverVersion());
+                if (isDataSource())
+                    sb.append(";DS");
+                conn.close ();
+                m_dbInfo = sb.toString ();
+            }
+            catch (Exception ex){
+                log.error(ex.toString());
+            }
+        }
+        conn = null;
+        return sb.toString();
+    }
 
 
     /**
