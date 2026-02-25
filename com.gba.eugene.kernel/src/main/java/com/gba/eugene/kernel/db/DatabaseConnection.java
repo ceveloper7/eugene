@@ -1,5 +1,6 @@
 package com.gba.eugene.kernel.db;
 
+import com.gba.eugene.kernel.util.SystemProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +57,45 @@ public class DatabaseConnection implements Serializable, Cloneable {
     private String		m_dbInfo = null;
 
     private int m_webPort;
+
+    public DatabaseConnection(String host){
+        if (host != null){
+            m_apps_host = host;
+            m_db_host = host;
+        }
+    }
+
+    public synchronized static DatabaseConnection get(){
+        if (s_cc == null){
+            String attributes = SystemProperties.getProperty(SystemProperties.P_CONNECTION);
+            s_cc = new DatabaseConnection(null);
+            s_cc.setAttribute(attributes);
+            log.info(s_cc.toString());
+        }
+
+        return s_cc;
+    }
+
+    public static DatabaseConnection get(String type, String db_host, int db_port, String db_name){
+        return get (type, db_host, db_port, db_name, null, null);
+    }
+
+    public static DatabaseConnection get(String type, String db_host, int db_port, String db_name, String db_uid, String db_pwd){
+        DatabaseConnection cc = new DatabaseConnection(db_host);
+        cc.setAppsHost(db_host);
+        cc.setType(type);
+        cc.setDbHost(db_host);
+        cc.setDbPort(db_port);
+        cc.setDbName(db_name);
+
+        if(db_uid != null)
+            cc.setDbUid(db_uid);
+
+        if(db_pwd != null)
+            cc.setDbPwd(db_pwd);
+
+        return cc;
+    }
 
     /**
      *  Get Name
@@ -429,6 +469,65 @@ public class DatabaseConnection implements Serializable, Cloneable {
         return sb.toString ();
     } 	//  toStringDetail
 
+    /**
+     * @param value
+     * @return un-escape value
+     * @see DatabaseConnection#escape(String)
+     */
+    private String unescape(String value) {
+        value = value.replace("&eq;", "=");
+        value = value.replace("&comma;", ",");
+        return value;
+    }
 
-
+    private void setAttribute(String attributes){
+        try{
+            attributes = attributes.substring(attributes.indexOf("[")+1, attributes.length() - 1);
+            String[] pairs= attributes.split("[,]");
+            for(String pair : pairs){
+                String[] pairComponents = pair.split("[=]");
+                String key = pairComponents[0];
+                String value = pairComponents.length == 2 ? unescape(pairComponents[1]) : "";
+                if ("name".equalsIgnoreCase(key))
+                {
+                    setName(value);
+                }
+                else if ("AppsHost".equalsIgnoreCase(key))
+                {
+                    setAppsHost(value);
+                }
+                else if ("type".equalsIgnoreCase(key))
+                {
+                    setType(value);
+                }
+                else if ("DBhost".equalsIgnoreCase(key))
+                {
+                    setDbHost(value);
+                }
+                else if ("DBport".equalsIgnoreCase(key))
+                {
+                    setDbPort(value);
+                }
+                else if ("DbName".equalsIgnoreCase(key))
+                {
+                    setDbName(value);
+                }
+                else if ("UID".equalsIgnoreCase(key))
+                {
+                    setDbUid(value);
+                }
+                else if ("PWD".equalsIgnoreCase(key))
+                {
+                    setDbPwd(value);
+                }
+                else if ("WebPort".equalsIgnoreCase(key))
+                {
+                    setWebPort(value);
+                }
+            }
+        }
+        catch (Exception e){
+            log.info(attributes + " - " + e.toString());
+        }
+    }
 }

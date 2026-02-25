@@ -1,0 +1,227 @@
+package com.gba.eugene.kernel.util;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Properties;
+
+public class SecureEngine {
+    private static final Logger log = LoggerFactory.getLogger(SecureEngine.class);
+    /** Test String					*/
+    private static final String	TEST = "This is a 0123456789 .,; -= Test!";
+    /** Secure Engine 				*/
+    private static SecureEngine	s_engine = null;
+
+    /** The real Engine				*/
+    private	SecureInterface		implementation = null;
+
+    private SecureEngine(String className){
+        String realClass = className;
+        if (realClass == null || realClass.length() == 0)
+            realClass = SecureInterface.SYSTEM_SECURE_DEFAULT;
+        Exception cause = null;
+        try
+        {
+            Class clazz = Class.forName(realClass);
+            implementation = (SecureInterface)clazz.newInstance();
+        }
+        catch (Exception e)
+        {
+            cause = e;
+        }
+        if (implementation == null)
+        {
+            String msg = "Could not initialize: " + realClass + " - " + cause.toString()
+                    + "\nCheck start script parameter ADEMPIERE_SECURE";
+            log.error(msg);
+            System.err.println(msg);
+            System.exit(10);
+        }
+
+        //	See if it works
+        String testE = implementation.encrypt(TEST);
+        String testC = implementation.decrypt(testE);
+        if (!testC.equals(TEST))
+            throw new IllegalStateException(realClass
+                    + ": " + TEST
+                    + "->" + testE + "->" + testC);
+        log.trace (realClass + " initialized - " + implementation);
+    }
+
+    /**
+     * 	Initialize Security
+     *	@param ctx context with ADEMPIERE_SECURE class name
+     */
+    public static void init (Properties ctx)
+    {
+        if (s_engine == null)
+        {
+            String className = ctx.getProperty(SecureInterface.SYSTEM_SECURE);
+            s_engine = new SecureEngine(className);
+        }
+    }	//	init
+
+    /**
+     * 	Initialize/Test Security
+     *	@param className class name
+     */
+    public static void init (String className)
+    {
+        if (s_engine == null)
+            s_engine = new SecureEngine(className);
+        else if (className != null && !className.equals(getClassName()))
+        {
+            String msg = "Requested Security class = " + className
+                    + " is not the same as the active class = " + getClassName()
+                    + "\nMake sure to set the security class in the start script";
+            log.error(msg);
+            System.err.println(msg);
+            System.exit(10);
+        }
+    }	//	init
+
+    /**
+     * 	Get Class Name
+     *	@return class name
+     */
+    public static String getClassName()
+    {
+        if (s_engine == null)
+            return null;
+        return s_engine.implementation.getClass().getName();
+    }	//	getClassName
+
+    /**
+     *  Convert String and salt to SHA-512 hash with iterations
+     *  https://www.owasp.org/index.php/Hashing_Java
+     *
+     *  @param value message
+     *  @return HexString of message (length = 128 characters)
+     * @throws UnsupportedEncodingException
+     * @throws NoSuchAlgorithmException
+     */
+    public static String getSHA512Hash (int iterations, String value, byte[] salt) throws NoSuchAlgorithmException, UnsupportedEncodingException
+    {
+        if (s_engine == null)
+            init(System.getProperties());
+        return s_engine.implementation.getSHA512Hash(iterations, value, salt);
+    }	//	getDigest
+
+    /**
+     *  Convert String to Digest.
+     *  JavaScript version see - http://pajhome.org.uk/crypt/md5/index.html
+     *
+     *  @param value message
+     *  @return HexString of message (length = 32 characters)
+     */
+    public static String getDigest (String value)
+    {
+        if (s_engine == null)
+            init(System.getProperties());
+        return s_engine.implementation.getDigest(value);
+    }	//	getDigest
+
+    /**
+     *	Encryption.
+     * 	The methods must recognize clear text values
+     *  @param value clear value
+     *  @return encrypted String
+     */
+    public static String encrypt (String value)
+    {
+        if (value == null || value.length() == 0)
+            return value;
+        if (s_engine == null)
+            init(System.getProperties());
+        //
+        boolean inQuotes = value.startsWith("'") && value.endsWith("'");
+        if (inQuotes)
+            value = value.substring(1, value.length()-1);
+        //
+        String retValue = s_engine.implementation.encrypt(value);
+        if (inQuotes)
+            return "'" + retValue + "'";
+        return retValue;
+    }	//	encrypt
+
+    /**
+     *	Decryption.
+     * 	The methods must recognize clear text values
+     *  @param value encrypted value
+     *  @return decrypted String
+     */
+    public static String decrypt (String value)
+    {
+        if (value == null)
+            return null;
+        if (s_engine == null)
+            init(System.getProperties());
+        boolean inQuotes = value.startsWith("'") && value.endsWith("'");
+        if (inQuotes)
+            value = value.substring(1, value.length()-1);
+        String retValue = null;
+        if (value.startsWith(SecureInterface.CLEARVALUE_START) && value.endsWith(SecureInterface.CLEARVALUE_END))
+            retValue = value.substring(SecureInterface.CLEARVALUE_START.length(), value.length()-SecureInterface.CLEARVALUE_END.length());
+        else
+            retValue = s_engine.implementation.decrypt(value);
+        if (inQuotes)
+            return "'" + retValue + "'";
+        return retValue;
+    }	//	decrypt
+
+    /**
+     *	Encryption.
+     * 	The methods must recognize clear values
+     *  @param value clear value
+     *  @return encrypted String
+     */
+    public static Object encrypt (Object value)
+    {
+        if (value instanceof String)
+            return encrypt((String) value);
+        return value;
+    }	//	encrypt
+
+    /**
+     *	Decryption.
+     * 	The methods must recognize clear values
+     *  @param value encrypted value
+     *  @return decrypted String
+     */
+    public static Object decrypt (Object value)
+    {
+        if (value instanceof String)
+            return decrypt((String) value);
+        return value;
+    }	//	decrypt
+
+
+    /**
+     * 	Test output
+     *	@param test test value
+     *	@param should target value
+     *	@return info
+     */
+    private static String test (Object test, Object should)
+    {
+        StringBuffer sb = new StringBuffer ();
+        sb.append(test);
+        if (test == null)
+        {
+            if (should == null)
+                sb.append(" - ok");
+            else
+                sb.append(" [Should=").append(should).append("] - ERROR");
+        }
+        else
+        {
+            if (test.equals(should))
+                sb.append(" - ok");
+            else
+                sb.append(" [Should=").append(should).append("] - ERROR");
+        }
+        return sb.toString();
+    }	//	test
+}

@@ -38,6 +38,18 @@ public final class SystemProperties implements Serializable {
 
     public static final String SYSTEM_HOME = "SYSTEM_HOME";
 
+    public static String getProperty(String key){
+        if (key == null) return "";
+        String retStr = s_prop.getProperty(key, "");
+        if (retStr == null || retStr.isEmpty())
+            return "";
+        //
+        String value = SecureEngine.decrypt(retStr);
+        if (value == null)
+            return "";
+        return value;
+    }
+
     /**
      *  Are we in Client Mode ?
      *  @return true if client
