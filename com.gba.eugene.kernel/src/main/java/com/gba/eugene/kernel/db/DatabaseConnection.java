@@ -516,6 +516,36 @@ public class DatabaseConnection implements Serializable, Cloneable {
         return sb.toString ();
     } 	//  toStringDetail
 
+    public String toStringLong(){
+        StringBuilder sb = new StringBuilder ("CConnection[");
+        sb.append ("name=").append(escape(m_name))
+                .append(",AppsHost=").append (escape(m_apps_host))
+                .append(",WebPort=").append (m_webPort)
+                .append(",type=").append (escape(m_type))
+                .append(",DBhost=").append (escape(m_db_host))
+                .append(",DBport=").append (m_db_port)
+                .append(",DBname=").append (escape(m_db_name))
+                .append(",UID=").append (escape(m_db_uid))
+                .append(",PWD")
+                .append("]");
+        return sb.toString();
+    }
+
+    /**
+     * Use html like escape sequence to escape = and ,
+     * @param value
+     * @return escape value
+     */
+    private String escape(String value) {
+        if (value == null)
+            return null;
+
+        // use html like escape sequence to escape = and ,
+        value = value.replace("=", "&eq;");
+        value = value.replace(",", "&comma;");
+        return value;
+    }
+
     /**
      * @param value
      * @return un-escape value

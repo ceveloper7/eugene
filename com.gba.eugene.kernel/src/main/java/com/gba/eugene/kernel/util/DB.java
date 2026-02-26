@@ -116,4 +116,11 @@ public final class DB {
     public static SystemDatabase getDatabase(String url){
         return Database.getDatabaseFromURL(url);
     }
+
+    public static String getDatabaseInfo(){
+        if(s_cc != null)
+            return s_cc.getDBInfo();
+
+        return "No Database";
+    }
 }
