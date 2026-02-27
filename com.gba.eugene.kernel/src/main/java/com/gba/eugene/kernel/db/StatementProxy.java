@@ -1,8 +1,10 @@
 package com.gba.eugene.kernel.db;
 
+import com.gba.eugene.kernel.exceptions.DBException;
 import com.gba.eugene.kernel.util.CCachedRowSet;
 import com.gba.eugene.kernel.util.CStatementVO;
 import com.gba.eugene.kernel.util.DB;
+import com.gba.eugene.kernel.util.TransactionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +27,26 @@ public class StatementProxy implements InvocationHandler {
     protected transient Statement p_stmt = null;
     /**	Value Object					*/
     protected CStatementVO p_vo = null;
+
+    /**
+     * @param resultSetType
+     * @param resultSetConcurrency
+     * @param trxName
+     */
+    public StatementProxy(int resultSetType, int resultSetConcurrency, String trxName) {
+        p_vo = new CStatementVO (resultSetType, resultSetConcurrency);
+        p_vo.setTrxName(trxName);
+
+        init();
+    }
+
+    /**
+     * @param vo
+     */
+    public StatementProxy(CStatementVO vo) {
+        p_vo = vo;
+        init();
+    }
 
     //for subclass
     protected StatementProxy() {}
@@ -67,6 +89,32 @@ public class StatementProxy implements InvocationHandler {
         catch (InvocationTargetException e)
         {
             throw DB.getSQLException(e);
+        }
+    }
+
+    /**
+     * Initialise the statement wrapper object
+     */
+    protected void init(){
+        try{
+            Connection conn = null;
+            TransactionManager trx = p_vo.getTrxName() == null ? null : TransactionManager.get(p_vo.getTrxName(), false);
+            if(trx != null)
+            {
+                conn = trx.getConnection();
+            }
+            else{
+                m_conn = DB.createConnection(true, Connection.TRANSACTION_READ_COMMITTED);
+                conn = m_conn;
+            }
+            if (conn == null)
+                throw new DBException("No Connection");
+            p_stmt = conn.createStatement(p_vo.getResultSetType(), p_vo.getResultSetConcurrency());
+        }
+        catch (SQLException e)
+        {
+            log.error( "CStatement", e);
+            throw new DBException(e);
         }
     }
 
