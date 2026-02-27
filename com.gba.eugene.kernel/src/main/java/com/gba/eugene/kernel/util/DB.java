@@ -7,7 +7,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 public final class DB {
     /** Logger */
@@ -122,5 +124,44 @@ public final class DB {
             return s_cc.getDBInfo();
 
         return "No Database";
+    }
+
+    public static void close(Statement st){
+        try{
+            if (st != null)
+                st.close();
+        }
+        catch (SQLException ex){
+            ;
+        }
+    }
+
+    /**
+     * Convenient method to close result set
+     * @param rs
+     */
+    public static void close( ResultSet rs) {
+        try {
+            if (rs!=null) rs.close();
+        } catch (SQLException e) {
+            ;
+        }
+    }
+
+    /**
+     * Try to get the SQLException from Exception
+     * @param e Exception
+     * @return SQLException if found or provided exception elsewhere
+     */
+    public static Exception getSQLException(Exception e)
+    {
+        Throwable e1 = e;
+        while (e1 != null)
+        {
+            if (e1 instanceof SQLException)
+                return (SQLException)e1;
+            e1 = e1.getCause();
+        }
+        return e;
     }
 }

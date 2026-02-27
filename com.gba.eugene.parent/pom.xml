@@ -17,10 +17,16 @@
       <!--> L <-->
       <eugene.logback-core.version>1.5.18</eugene.logback-core.version>
       <eugene.logback-classic.version>1.5.18</eugene.logback-classic.version>
-      <!--> S <-->
-      <eugene.slf4j.version>2.1.0-alpha1</eugene.slf4j.version>
+
+      <!-- O -->
+
+
       <!--> P <-->
       <eugene.postgresql.version>42.7.3</eugene.postgresql.version>
+
+      <!--> S <-->
+      <eugene.slf4j.version>2.1.0-alpha1</eugene.slf4j.version>
+
 
       <maven.compiler.source>21</maven.compiler.source>
       <maven.compiler.target>21</maven.compiler.target>
@@ -62,6 +68,16 @@
                 <version>${eugene.logback-classic.version}</version>
             </dependency>
 
+            <!-- P -->
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${eugene.postgresql.version}</version>
+            </dependency>
+
+            <!-- O -->
+
+
             <!--> S <-->
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -69,12 +85,6 @@
                 <version>${eugene.slf4j.version}</version>
             </dependency>
 
-            <!-- P -->
-            <dependency>
-                <groupId>org.postgresql</groupId>
-                <artifactId>postgresql</artifactId>
-                <version>${eugene.postgresql.version}</version>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 

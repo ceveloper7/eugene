@@ -3,6 +3,8 @@ module com.gba.eugene.kernel {
     requires java.sql;
     requires org.postgresql.jdbc;
     requires com.zaxxer.hikari;
+    requires java.sql.rowset;
+    requires java.desktop;
 
     exports com.gba.eugene.kernel.util;
     exports com.gba.eugene.kernel.db;
