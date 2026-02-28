@@ -170,4 +170,96 @@ public class TransactionManager{
 
         return m_connection;
     }
+
+    /**
+     * Commit
+     * @param throwException if true, re-throws exception
+     * @return true if success
+     **/
+    public boolean commit(boolean throwException) throws SQLException
+    {
+        //local
+        try
+        {
+            if (m_connection != null)
+            {
+                m_connection.commit();
+                //log.log(isLocalTrx(m_trxName) ? Level.FINE : Level.INFO, "**** " + m_trxName);
+                log.trace ("**** {} " + m_trxName);
+                m_active = false;
+                return true;
+            }
+        }
+        catch (SQLException e)
+        {
+            log.trace( m_trxName, e);
+            if (throwException)
+            {
+                m_active = false;
+                throw e;
+            }
+        }
+        m_active = false;
+        return false;
+    }	//	commit
+
+    /**
+     * Commit
+     * @return true if success
+     */
+    public boolean commit()
+    {
+        try
+        {
+            return commit(false);
+        }
+        catch(SQLException e)
+        {
+            return false;
+        }
+    }
+
+    /**
+     * 	Rollback
+     *  @param throwException if true, re-throws exception
+     *	@return true if success, false if failed or transaction already rollback
+     */
+    public boolean rollback(boolean throwException) throws SQLException
+    {
+        //local
+        try
+        {
+            if (m_connection != null)
+            {
+                m_connection.rollback();
+                log.info ("**** " + m_trxName);
+                m_active = false;
+                return true;
+            }
+        }
+        catch (SQLException e)
+        {
+            log.error( m_trxName, e);
+            if (throwException)
+            {
+                m_active = false;
+                throw e;
+            }
+        }
+        m_active = false;
+        return false;
+    }	//	rollback
+
+    /**
+     * Rollback
+     * @return true if success, false if failed or transaction already rollback
+     */
+    public boolean rollback()
+    {
+        try {
+            return rollback(false);
+        } catch (SQLException e) {
+            return false;
+        }
+    }
 }
