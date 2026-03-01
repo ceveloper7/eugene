@@ -2,6 +2,7 @@ package com.gba.eugene.kernel.db;
 
 import com.gba.eugene.kernel.exceptions.DBException;
 import com.gba.eugene.kernel.model.SystemConstants;
+import com.gba.eugene.kernel.util.DisplayType;
 import com.gba.eugene.kernel.util.SystemProperties;
 import com.gba.eugene.kernel.util.Util;
 import com.zaxxer.hikari.HikariConfig;
@@ -12,14 +13,13 @@ import org.slf4j.LoggerFactory;
 import javax.sql.DataSource;
 import java.io.File;
 import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.sql.Connection;
-import java.sql.Driver;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -207,6 +207,76 @@ public class Database_PostgresSQL implements SystemDatabase{
     @Override
     public boolean supportsBLOB() {
         return true;
+    }
+
+    @Override
+    public String TO_DATE(Timestamp time, boolean dayOnly) {
+        if (time == null)
+        {
+            if (dayOnly)
+                return "current_date";
+            return "current_timestamp";
+        }
+
+        StringBuilder dateString = new StringBuilder("TO_TIMESTAMP('");
+        //  YYYY-MM-DD HH24:MI:SS.mmmm  JDBC Timestamp format
+        String myDate = time.toString();
+        if (dayOnly)
+        {
+            dateString.append(myDate.substring(0,10));
+            dateString.append("','YYYY-MM-DD')");
+        }
+        else
+        {
+            dateString.append(myDate.substring(0, myDate.indexOf('.')));	//	cut off miliseconds
+            dateString.append("','YYYY-MM-DD HH24:MI:SS')");
+        }
+        return dateString.toString();
+    }
+
+    @Override
+    public String TO_CHAR(String columnName, int displayType, String AD_Language) {
+        StringBuffer retValue = new StringBuffer("CAST (");
+        retValue.append(columnName);
+        retValue.append(" AS Text)");
+        return retValue.toString();
+    }
+
+    @Override
+    public String TO_NUMBER(BigDecimal number, int displayType) {
+        if (number == null)
+            return "NULL";
+        BigDecimal result = number;
+        int scale = DisplayType.getDefaultPrecision(displayType);
+        if (scale > number.scale())
+        {
+            try
+            {
+                result = number.setScale(scale, RoundingMode.HALF_UP);
+            }
+            catch (Exception e)
+            {
+                //	log.severe("Number=" + number + ", Scale=" + " - " + e.getMessage());
+            }
+        }
+        return result.toString();
+    }
+
+    @Override
+    public String TO_JSON(String value) {
+        if (value == null)
+            return "NULL";
+
+        StringBuilder retValue = null;
+        retValue = new StringBuilder("CAST (");
+        retValue.append(value);
+        retValue.append(" AS jsonb)");
+        return retValue.toString();
+    }
+
+    @Override
+    public String getJSONCast() {
+        return "CAST (? AS jsonb)";
     }
 
     /**

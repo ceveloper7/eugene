@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import javax.sql.RowSet;
 import java.math.BigDecimal;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public final class DB {
@@ -23,6 +24,9 @@ public final class DB {
 
     /** SQL Statement Separator "; "	*/
     public static final String SQLSTATEMENT_SEPARATOR = "; ";
+
+    /** Quote			*/
+    private static final char QUOTE = '\'';
 
     public synchronized static void setDBTarget(DatabaseConnection cc){
         if(cc == null)
@@ -791,12 +795,923 @@ public final class DB {
         return retValue;
     }
 
+    /**
+     * Get int Value from sql.<br/>
+     * Developer is recommended to call {@link #getSQLValueEx(String, String, Object...)} instead.
+     * @param trxName optional transaction name
+     * @param sql
+     * @param params array of parameters
+     * @return first value or -1 if not found or error
+     */
+    public static int getSQLValue (String trxName, String sql, Object... params)
+    {
+        int retValue = -1;
+        try
+        {
+            retValue = getSQLValueEx(trxName, sql, params);
+        }
+        catch (Exception e)
+        {
+            log.error( sql, getSQLException(e));
+        }
+        return retValue;
+    }
+
+    /**
+     * Get int value from sql.<br/>
+     * Developer is recommended to call {@link #getSQLValueEx(String, String, List)} instead.
+     * @param trxName optional transaction name
+     * @param sql
+     * @param params collection of parameters
+     * @return first value or null
+     */
+    public static int getSQLValue (String trxName, String sql, List<Object> params)
+    {
+        return getSQLValue(trxName, sql, params.toArray(new Object[params.size()]));
+    }
+
+    /**
+     * Get string value from sql
+     * @param trxName optional transaction name
+     * @param sql
+     * @param params array of parameters
+     * @return first value or null
+     * @throws DBException if there is any SQLException
+     */
+    public static String getSQLValueStringEx (String trxName, String sql, Object... params)
+    {
+        String retValue = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        Connection conn = null;
+        if (trxName == null)
+            conn = DB.createConnection(true, Connection.TRANSACTION_READ_COMMITTED);
+        try{
+            if (conn != null)
+            {
+                conn.setAutoCommit(false);
+                conn.setReadOnly(true);
+            }
+
+            if (conn != null)
+                pstmt = prepareStatement(conn, sql);
+            else
+                pstmt = prepareStatement(sql, trxName);
+            setParameters(pstmt, params);
+            rs = pstmt.executeQuery();
+            if (rs.next())
+                retValue = rs.getString(1);
+            else
+            if (log.isDebugEnabled())
+                log.debug("No Value " + sql);
+        }
+        catch (SQLException ex){
+            if (conn != null)
+            {
+                try {
+                    conn.rollback();
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
+            }
+            throw new DBException(ex, sql);
+        }
+        finally {
+            close(rs, pstmt);
+            rs = null; pstmt = null;
+        }
+        return retValue;
+    }
+
+    /**
+     * Get String Value from sql
+     * @param trxName optional transaction name
+     * @param sql
+     * @param params collection of parameters
+     * @return first value or null
+     * @throws DBException if there is any SQLException
+     */
+    public static String getSQLValueStringEx (String trxName, String sql, List<Object> params)
+    {
+        return getSQLValueStringEx(trxName, sql, params.toArray(new Object[params.size()]));
+    }
+
+    /**
+     * Get String Value from sql
+     * @param trxName optional transaction name
+     * @param sql
+     * @param params array of parameters
+     * @return first value or null
+     */
+    public static String getSQLValueString (String trxName, String sql, Object... params)
+    {
+        String retValue = null;
+        try
+        {
+            retValue = getSQLValueStringEx(trxName, sql, params);
+        }
+        catch (Exception e)
+        {
+            log.error(sql, getSQLException(e));
+        }
+        return retValue;
+    }
+
+    /**
+     * Get string value from sql.<br/>
+     * Developer is recommended to call {@link #getSQLValueStringEx(String, String, List)} instead.
+     * @param trxName optional transaction name
+     * @param sql
+     * @param params collection of parameters
+     * @return first value or null
+     */
+    public static String getSQLValueString (String trxName, String sql, List<Object> params)
+    {
+        return getSQLValueString(trxName, sql, params.toArray(new Object[params.size()]));
+    }
+
+    /**
+     * Get BigDecimal value from sql
+     * @param trxName optional transaction name
+     * @param sql
+     * @param params array of parameters
+     * @return first value or null if not found
+     * @throws DBException if there is any SQLException
+     */
+    public static BigDecimal getSQLValueBDEx (String trxName, String sql, Object... params) throws DBException
+    {
+        BigDecimal retValue = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        Connection conn = null;
+        if (trxName == null)
+            conn = DB.createConnection(true, Connection.TRANSACTION_READ_COMMITTED);
+        try{
+            if (conn != null)
+            {
+                conn.setAutoCommit(false);
+                conn.setReadOnly(true);
+            }
+
+            if (conn != null)
+                pstmt = prepareStatement(conn, sql);
+            else
+                pstmt = prepareStatement(sql, trxName);
+            setParameters(pstmt, params);
+            rs = pstmt.executeQuery();
+            if (rs.next())
+                retValue = rs.getBigDecimal(1);
+            else
+            if (log.isDebugEnabled()) log.debug("No Value " + sql);
+        }
+        catch (SQLException e){
+            if (conn != null)
+            {
+                try {
+                    conn.rollback();
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
+            }
+            throw new DBException(e, sql);
+        }
+        finally {
+            close(rs, pstmt);
+            rs = null; pstmt = null;
+        }
+        return retValue;
+    }
+
+    /**
+     * Get BigDecimal Value from sql
+     * @param trxName optional transaction name
+     * @param sql
+     * @param params collection of parameters
+     * @return first value or null if not found
+     * @throws DBException if there is any SQLException
+     */
+    public static BigDecimal getSQLValueBDEx (String trxName, String sql, List<Object> params) throws DBException
+    {
+        return getSQLValueBDEx(trxName, sql, params.toArray(new Object[params.size()]));
+    }
+
+    /**
+     * Get BigDecimal Value from sql.<br/>
+     * Developer is recommended to call {@link #getSQLValueBDEx(String, String, Object...)} instead.
+     * @param trxName optional transaction name
+     * @param sql
+     * @param params array of parameters
+     * @return first value or null
+     */
+    public static BigDecimal getSQLValueBD (String trxName, String sql, Object... params)
+    {
+        try
+        {
+            return getSQLValueBDEx(trxName, sql, params);
+        }
+        catch (Exception e)
+        {
+            log.error(sql, getSQLException(e));
+        }
+        return null;
+    }
+
+    /**
+     * Get BigDecimal Value from sql.<br/>
+     * Developer is recommended to call {@link #getSQLValueBDEx(String, String, List)} instead.
+     * @param trxName optional transaction name
+     * @param sql
+     * @param params collection of parameters
+     * @return first value or null
+     */
+    public static BigDecimal getSQLValueBD (String trxName, String sql, List<Object> params)
+    {
+        return getSQLValueBD(trxName, sql, params.toArray(new Object[params.size()]));
+    }
+
+    /**
+     * Get Timestamp Value from sql
+     * @param trxName optional transaction name
+     * @param sql
+     * @param params array of parameters
+     * @return first value or null
+     * @throws DBException if there is any SQLException
+     */
+    public static Timestamp getSQLValueTSEx (String trxName, String sql, Object... params)
+    {
+        Timestamp retValue = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        Connection conn = null;
+        if (trxName == null)
+            conn = DB.createConnection(true, Connection.TRANSACTION_READ_COMMITTED);
+        try{
+            if (conn != null)
+            {
+                conn.setAutoCommit(false);
+                conn.setReadOnly(true);
+            }
+
+            if (conn != null)
+                pstmt = prepareStatement(conn, sql);
+            else
+                pstmt = prepareStatement(sql, trxName);
+            setParameters(pstmt, params);
+            rs = pstmt.executeQuery();
+            if (rs.next())
+                retValue = rs.getTimestamp(1);
+            else
+            if (log.isDebugEnabled()) log.debug("No Value " + sql);
+        }
+        catch (SQLException e){
+            if (conn != null)
+            {
+                try {
+                    conn.rollback();
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
+            }
+            throw new DBException(e, sql);
+        }
+        finally {
+            close(rs, pstmt);
+            rs = null; pstmt = null;
+        }
+        return retValue;
+    }
+
+    /**
+     * Get Timestamp Value from sql
+     * @param trxName optional transaction name
+     * @param sql
+     * @param params collection of parameters
+     * @return first value or null if not found
+     * @throws DBException if there is any SQLException
+     */
+    public static Timestamp getSQLValueTSEx (String trxName, String sql, List<Object> params) throws DBException
+    {
+        return getSQLValueTSEx(trxName, sql, params.toArray(new Object[params.size()]));
+    }
+
+    /**
+     * Get Timestamp Value from sql.<br/>
+     * Developer is recommended to call {@link #getSQLValueTSEx(String, String, Object...)} instead.
+     * @param trxName optional transaction name
+     * @param sql
+     * @param params array of parameters
+     * @return first value or null
+     */
+    public static Timestamp getSQLValueTS (String trxName, String sql, Object... params)
+    {
+        try
+        {
+            return getSQLValueTSEx(trxName, sql, params);
+        }
+        catch (Exception e)
+        {
+            log.error(sql, getSQLException(e));
+        }
+        return null;
+    }
+
+    /**
+     * Get Timestamp Value from sql.<br/>
+     * Developer is recommended to call {@link #getSQLValueTSEx(String, String, List)} instead.
+     * @param trxName optional transaction name
+     * @param sql
+     * @param params collection of parameters
+     * @return first value or null
+     */
+    public static Timestamp getSQLValueTS (String trxName, String sql, List<Object> params)
+    {
+        Object[] arr = new Object[params.size()];
+        params.toArray(arr);
+        return getSQLValueTS(trxName, sql, arr);
+    }
+
+    /**
+     * Get Array of Key Name Pairs
+     * @param sql select with id / name as first / second column
+     * @param optional if true (-1,"") is added
+     * @return array of {@link KeyNamePair}
+     * @see #getKeyNamePairs(String, boolean, Object...)
+     */
+    public static KeyNamePair[] getKeyNamePairs(String sql, boolean optional)
+    {
+        return getKeyNamePairs(sql, optional, (Object[])null);
+    }
+
+    /**
+     * Get Array of Key Name Pairs
+     * @param sql select with id / name as first / second column
+     * @param optional if true (-1,"") is added
+     * @return array of {@link KeyNamePair}
+     * @see #getKeyNamePairs(String, boolean, Object...)
+     */
+    public static KeyNamePair[] getKeyNamePairsEx(String sql, boolean optional)
+    {
+        return getKeyNamePairsEx(sql, optional, (Object[])null);
+    }
+
+    /**
+     * Get Array of Key Name Pairs
+     * @param sql select with id / name as first / second column
+     * @param optional if true (-1,"") is added
+     * @param params query parameters
+     */
+    public static KeyNamePair[] getKeyNamePairs(String sql, boolean optional, Object ... params)
+    {
+        return getKeyNamePairs(null, sql, optional, params);
+    }
+
+    /**
+     * Get Array of Key Name Pairs
+     * @param sql select with id / name as first / second column
+     * @param optional if true (-1,"") is added
+     * @param params query parameters
+     */
+    public static KeyNamePair[] getKeyNamePairsEx(String sql, boolean optional, Object ... params)
+    {
+        return getKeyNamePairsEx(null, sql, optional, params);
+    }
+
+
+    /**
+     * Get Array of Key Name Pairs
+     * @param trxName
+     * @param sql select with id / name as first / second column
+     * @param optional if true (-1,"") is added
+     * @param params query parameters
+     * @return Array of Key Name Pairs
+     */
+    public static KeyNamePair[] getKeyNamePairs(String trxName, String sql, boolean optional, Object ... params)
+    {
+        try
+        {
+            return getKeyNamePairsEx(trxName, sql, optional, params);
+        }
+        catch (Exception e)
+        {
+            log.error( sql, getSQLException(e));
+        }
+        return new KeyNamePair[0];
+    }
+
+    /**
+     * Get Array of Key Name Pairs
+     * @param trxName
+     * @param sql select with id / name as first / second column
+     * @param optional if true (-1,"") is added
+     * @param params query parameters
+     * @return Array of Key Name Pairs
+     */
+    public static KeyNamePair[] getKeyNamePairsEx(String trxName, String sql, boolean optional, Object ... params)
+    {
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        Connection conn = null;
+        if (trxName == null)
+            conn = DB.createConnection(true, Connection.TRANSACTION_READ_COMMITTED);
+        ArrayList<KeyNamePair> list = new ArrayList<KeyNamePair>();
+        if (optional)
+        {
+            list.add (new KeyNamePair(-1, ""));
+        }
+        try{
+            if (conn != null)
+            {
+                conn.setAutoCommit(false);
+                conn.setReadOnly(true);
+            }
+            if (conn != null)
+                pstmt = prepareStatement(conn, sql);
+            else
+                pstmt = DB.prepareStatement(sql, trxName);
+            setParameters(pstmt, params);
+            rs = pstmt.executeQuery();
+            while (rs.next())
+            {
+                list.add(new KeyNamePair(rs.getInt(1), rs.getString(2)));
+            }
+        }
+        catch (SQLException e){
+            if (conn != null)
+            {
+                try {
+                    conn.rollback();
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
+            }
+            throw new DBException(e, e.getMessage());
+        }
+        finally {
+            close(rs, pstmt);
+            rs= null;
+            pstmt = null;
+        }
+        KeyNamePair[] retValue = new KeyNamePair[list.size()];
+        list.toArray(retValue);
+        return retValue;
+    }
+
+    /**
+     * Get Array of IDs
+     * @param trxName
+     * @param sql select with id as first column
+     * @param params query parameters
+     * @throws DBException if there is any SQLException
+     */
+    public static int[] getIDsEx(String trxName, String sql, Object ... params) throws DBException
+    {
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        ArrayList<Integer> list = new ArrayList<Integer>();
+        try
+        {
+            pstmt = DB.prepareStatement(sql, trxName);
+            setParameters(pstmt, params);
+            rs = pstmt.executeQuery();
+            while (rs.next())
+            {
+                list.add(rs.getInt(1));
+            }
+        }
+        catch (SQLException e)
+        {
+            throw new DBException(e, sql);
+        }
+        finally
+        {
+            close(rs, pstmt);
+            rs= null;
+            pstmt = null;
+        }
+        //	Convert to array
+        int[] retValue = new int[list.size()];
+        for (int i = 0; i < retValue.length; i++)
+        {
+            retValue[i] = list.get(i);
+        }
+        return retValue;
+    }	//	getIDsEx
+
+    /**
+     *  Create SQL TO Date String from Timestamp
+     *
+     *  @param  time Date to be converted
+     *  @param  dayOnly true if time set to 00:00:00
+     *
+     *  @return TO_DATE('2001-01-30 18:10:20',''YYYY-MM-DD HH24:MI:SS')
+     *      or  TO_DATE('2001-01-30',''YYYY-MM-DD')
+     */
+    public static String TO_DATE (Timestamp time, boolean dayOnly)
+    {
+        return s_cc.getDatabase().TO_DATE(time, dayOnly);
+    }   //  TO_DATE
+
+    /**
+     *  Create SQL TO Date String from Timestamp
+     *  @param day day time
+     *  @return TO_DATE String (day only)
+     */
+    public static String TO_DATE (Timestamp day)
+    {
+        return TO_DATE(day, true);
+    }   //  TO_DATE
+
+    /**
+     *  Create SQL for formatted Date, Number
+     *
+     *  @param  columnName  the column name in the SQL
+     *  @param  displayType Display Type
+     *  @param  AD_Language 6 character language setting (from Env.LANG_*)
+     *
+     *  @return TRIM(TO_CHAR(columnName,'999G999G999G990D00','NLS_NUMERIC_CHARACTERS='',.'''))
+     *      or TRIM(TO_CHAR(columnName,'TM9')) depending on DisplayType and Language
+     *
+     *   */
+    public static String TO_CHAR (String columnName, int displayType, String AD_Language)
+    {
+        if (columnName == null || AD_Language == null || columnName.isEmpty())
+            throw new IllegalArgumentException("Required parameter missing");
+        return s_cc.getDatabase().TO_CHAR(columnName, displayType, AD_Language);
+    }   //  TO_CHAR
+
+    /**
+     * 	Return number as string for INSERT statements with correct precision
+     *	@param number number
+     *	@param displayType display Type
+     *	@return number as string
+     */
+    public static String TO_NUMBER (BigDecimal number, int displayType)
+    {
+        return s_cc.getDatabase().TO_NUMBER(number, displayType);
+    }	//	TO_NUMBER
+
+    /**
+     *  Package Strings for SQL command in quotes
+     *  @param txt  String with text
+     *  @return escaped string for sql statement (NULL if null)
+     */
+    public static String TO_STRING (String txt)
+    {
+        return TO_STRING (txt, 0);
+    }   //  TO_STRING
+
+    /**
+     *	Package Strings for SQL command in quotes.
+     *  <pre>
+     *	    -	include in ' (single quotes)
+     *	    -	replace ' with ''
+     *  </pre>
+     *  @param txt  String with text
+     *  @param maxLength    Maximum Length of content or 0 to ignore
+     *  @return escaped string for sql statement (NULL if null)
+     */
+    public static String TO_STRING (String txt, int maxLength)
+    {
+        if (txt == null || txt.isEmpty())
+            return "NULL";
+
+        //  Length
+        String text = txt;
+        if (maxLength != 0 && text.length() > maxLength)
+            text = txt.substring(0, maxLength);
+
+        //  copy characters		(we need to look through anyway)
+        StringBuilder out = new StringBuilder();
+        out.append(QUOTE);		//	'
+        for (int i = 0; i < text.length(); i++)
+        {
+            char c = text.charAt(i);
+            if (c == QUOTE)
+                out.append("''");
+            else
+                out.append(c);
+        }
+        out.append(QUOTE);		//	'
+        //
+        return out.toString();
+    }	//	TO_STRING
+
+    /**
+     * 	Return string as JSON object for INSERT statements with correct precision
+     *	@param value
+     *	@return value as json
+     */
+    public static String TO_JSON (String value)
+    {
+        return s_cc.getDatabase().TO_JSON(value);
+    }
+
+    /**
+     *	@return string with right casting for JSON inserts
+     */
+    public static String getJSONCast()
+    {
+        return s_cc.getDatabase().getJSONCast();
+    }
+
+    public static int getSQLValue (String trxName, String sql)
+    {
+        return getSQLValue(trxName, sql, new Object[]{});
+    }
+
+    public static int getSQLValue (String trxName, String sql, int int_param1)
+    {
+        return getSQLValue(trxName, sql, new Object[]{int_param1});
+    }
+
+    public static int getSQLValue (String trxName, String sql, int int_param1, int int_param2)
+    {
+        return getSQLValue(trxName, sql, new Object[]{int_param1, int_param2});
+    }
+
+    public static int getSQLValue (String trxName, String sql, String str_param1)
+    {
+        return getSQLValue(trxName, sql, new Object[]{str_param1});
+    }
+
+    public static int getSQLValue (String trxName, String sql, int int_param1, String str_param2)
+    {
+        return getSQLValue(trxName, sql, new Object[]{int_param1, str_param2});
+    }
+
+    public static String getSQLValueString (String trxName, String sql, int int_param1)
+    {
+        return getSQLValueString(trxName, sql, new Object[]{int_param1});
+    }
+
+    public static BigDecimal getSQLValueBD (String trxName, String sql, int int_param1)
+    {
+        return getSQLValueBD(trxName, sql, new Object[]{int_param1});
+    }
+
+    /**
+     * Get Array of ValueNamePair items.
+     * <pre> Example:
+     * String sql = "SELECT Name, Description FROM AD_Ref_List WHERE AD_Reference_ID=?";
+     * ValueNamePair[] list = DB.getValueNamePairs(sql, false, params);
+     * </pre>
+     * @param sql SELECT Value_Column, Name_Column FROM ...
+     * @param optional if {@link ValueNamePair#EMPTY} is added
+     * @param params query parameters
+     * @return array of {@link ValueNamePair} or empty array
+     * @throws DBException if there is any SQLException
+     */
+    public static ValueNamePair[] getValueNamePairs(String sql, boolean optional, List<Object> params)
+    {
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        ArrayList<ValueNamePair> list = new ArrayList<ValueNamePair>();
+        if (optional)
+        {
+            list.add (ValueNamePair.EMPTY);
+        }
+        try
+        {
+            pstmt = DB.prepareStatement(sql, null);
+            setParameters(pstmt, params);
+            rs = pstmt.executeQuery();
+            while (rs.next())
+            {
+                list.add(new ValueNamePair(rs.getString(1), rs.getString(2)));
+            }
+        }
+        catch (SQLException e)
+        {
+            throw new DBException(e, sql);
+        }
+        finally
+        {
+            close(rs, pstmt);
+            rs = null; pstmt = null;
+        }
+        return list.toArray(new ValueNamePair[list.size()]);
+    }
+
+    /**
+     * Get Array of KeyNamePair items.
+     * <pre> Example:
+     * String sql = "SELECT C_City_ID, Name FROM C_City WHERE C_City_ID=?";
+     * KeyNamePair[] list = DB.getKeyNamePairs(sql, false, params);
+     * </pre>
+     * @param sql SELECT ID_Column, Name_Column FROM ...
+     * @param optional if {@link ValueNamePair#EMPTY} is added
+     * @param params query parameters
+     * @return array of {@link KeyNamePair} or empty array
+     * @throws DBException if there is any SQLException
+     */
+    public static KeyNamePair[] getKeyNamePairs(String sql, boolean optional, List<Object> params)
+    {
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        ArrayList<KeyNamePair> list = new ArrayList<KeyNamePair>();
+        if (optional)
+        {
+            list.add (KeyNamePair.EMPTY);
+        }
+        try
+        {
+            pstmt = DB.prepareStatement(sql, null);
+            setParameters(pstmt, params);
+            rs = pstmt.executeQuery();
+            while (rs.next())
+            {
+                list.add(new KeyNamePair(rs.getInt(1), rs.getString(2)));
+            }
+        }
+        catch (SQLException e)
+        {
+            throw new DBException(e, sql);
+        }
+        finally
+        {
+            close(rs, pstmt);
+            rs = null; pstmt = null;
+        }
+        return list.toArray(new KeyNamePair[list.size()]);
+    }
+
     private static void verifyTrx(String trxName) {
         if (trxName != null && TransactionManager.get(trxName, false) == null) {
             // Using a trx that was previously closed or never opened
             // this is equivalent to commit without trx (autocommit)
             log.error("Transaction closed or never opened ("+trxName+") => (maybe time out)"); // severe?
         }
+    }
+
+    /**
+     * Get a list of objects from sql (one per each column in the select clause), column indexing starts with 0
+     * @param trxName optional transaction name
+     * @param sql
+     * @param params array of parameters
+     * @return null if not found
+     * @throws DBException if there is any SQLException
+     */
+    public static List<Object> getSQLValueObjectsEx(String trxName, String sql, Object... params) {
+        List<Object> retValue = new ArrayList<Object>();
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        Connection conn = null;
+        if (trxName == null)
+            conn = DB.createConnection(true, Connection.TRANSACTION_READ_COMMITTED);
+
+        try{
+            if (conn != null)
+            {
+                conn.setAutoCommit(false);
+                conn.setReadOnly(true);
+            }
+
+            if (conn != null)
+                pstmt = prepareStatement(conn, sql);
+            else
+                pstmt = prepareStatement(sql, trxName);
+            setParameters(pstmt, params);
+            rs = pstmt.executeQuery();
+            ResultSetMetaData rsmd = rs.getMetaData();
+            if (rs.next()) {
+                for (int i=1; i<=rsmd.getColumnCount(); i++) {
+                    Object obj = rs.getObject(i);
+                    if (rs.wasNull())
+                        retValue.add(null);
+                    else
+                        retValue.add(obj);
+                }
+            } else {
+                retValue = null;
+            }
+        }
+        catch (SQLException e){
+            if (conn != null)
+            {
+                try {
+                    conn.rollback();
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
+            }
+            throw new DBException(e, sql);
+        }
+        finally {
+            close(rs, pstmt);
+            rs = null; pstmt = null;
+        }
+        return retValue;
+    }
+
+    /**
+     * Get a list of object list from sql (one object list per each row, and in the object list, one object per each column in the select clause),
+     * column indexing starts with 0.<br/>
+     * WARNING: This method must be used just for queries returning few records, using it for many records implies heavy memory consumption
+     * @param trxName optional transaction name
+     * @param sql
+     * @param params array of parameters
+     * @return null if not found
+     * @throws DBException if there is any SQLException
+     */
+    public static List<List<Object>> getSQLArrayObjectsEx(String trxName, String sql, Object... params) {
+        List<List<Object>> rowsArray = new ArrayList<List<Object>>();
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        Connection conn = null;
+        if (trxName == null)
+            conn = DB.createConnection(true, Connection.TRANSACTION_READ_COMMITTED);
+        try{
+            if (conn != null)
+            {
+                conn.setAutoCommit(false);
+                conn.setReadOnly(true);
+            }
+
+            if (conn != null)
+                pstmt = prepareStatement(conn, sql);
+            else
+                pstmt = prepareStatement(sql, trxName);
+            setParameters(pstmt, params);
+            rs = pstmt.executeQuery();
+            ResultSetMetaData rsmd = rs.getMetaData();
+            while (rs.next()) {
+                List<Object> retValue = new ArrayList<Object>();
+                for (int i=1; i<=rsmd.getColumnCount(); i++) {
+                    Object obj = rs.getObject(i);
+                    if (rs.wasNull())
+                        retValue.add(null);
+                    else
+                        retValue.add(obj);
+                }
+                rowsArray.add(retValue);
+            }
+        }
+        catch (SQLException e){
+            if (conn != null)
+            {
+                try {
+                    conn.rollback();
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
+            }
+            throw new DBException(e, sql);
+        }
+        finally {
+            close(rs, pstmt);
+            rs = null; pstmt = null;
+        }
+        return rowsArray;
+    }
+
+    /**
+     * Create IN clause for csv value
+     * @param columnName
+     * @param csv comma separated value
+     * @return IN clause
+     */
+    public static String inClauseForCSV(String columnName, String csv)
+    {
+        return inClauseForCSV(columnName, csv, false);
+    }
+
+    /**
+     * Create IN clause for csv value
+     * @param columnName
+     * @param csv comma separated value
+     * @param isNotClause true to append NOT before IN
+     * @return IN clause
+     */
+    public static String inClauseForCSV(String columnName, String csv, boolean isNotClause)
+    {
+        StringBuilder builder = new StringBuilder();
+        builder.append(columnName);
+
+        if(isNotClause)
+            builder.append(" NOT ");
+
+        builder.append(" IN (");
+        String[] values = csv.split("[,]");
+        for(int i = 0; i < values.length; i++)
+        {
+            if (i > 0)
+                builder.append(",");
+            String key = values[i];
+            if (columnName.endsWith("_ID"))
+            {
+                builder.append(key);
+            }
+            else
+            {
+                if (key.startsWith("\"") && key.endsWith("\""))
+                {
+                    key = key.substring(1, key.length()-1);
+                }
+                builder.append(TO_STRING(key));
+            }
+        }
+        builder.append(")");
+        return builder.toString();
     }
 
 }

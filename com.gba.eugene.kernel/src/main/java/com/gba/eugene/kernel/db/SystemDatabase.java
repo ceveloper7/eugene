@@ -1,9 +1,11 @@
 package com.gba.eugene.kernel.db;
 
 import javax.sql.DataSource;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 
 public interface SystemDatabase {
 
@@ -110,6 +112,49 @@ public interface SystemDatabase {
      *  @return true if BLOB is supported
      */
     public boolean supportsBLOB();
+
+    /**
+     *  Create SQL TO Date statement for Timestamp
+     *
+     *  @param  time Date to be converted
+     *  @param  dayOnly true if time should be set to 00:00:00
+     *  @return to date function
+     */
+    public String TO_DATE (Timestamp time, boolean dayOnly);
+
+    /**
+     *  Create SQL for formatted Date, Number
+     *
+     *  @param  columnName  the column name in the SQL
+     *  @param  displayType Display Type
+     *  @param  AD_Language 6 character language setting (from Env.LANG_*)
+     *
+     *  @return TRIM(TO_CHAR(columnName,'999G999G999G990D00','NLS_NUMERIC_CHARACTERS='',.'''))
+     *      or TRIM(TO_CHAR(columnName,'TM9')) depending on DisplayType and Language
+     *
+     **/
+    public String TO_CHAR (String columnName, int displayType, String AD_Language);
+
+
+    /**
+     * 	Return number as string for INSERT statements with correct precision
+     *	@param number number
+     *	@param displayType display Type
+     *	@return number as string
+     */
+    public String TO_NUMBER (BigDecimal number, int displayType);
+
+    /**
+     * 	Return string as JSON object for INSERT statements
+     *	@param value
+     *	@return value as JSON
+     */
+    public String TO_JSON (String value);
+
+    /**
+     *	@return string with right casting for JSON inserts
+     */
+    public String getJSONCast ();
 
     /**
      *  String Representation
