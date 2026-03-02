@@ -10,7 +10,7 @@ public interface SecureInterface {
     /** Class Name implementing SecureInterface	*/
     public static final String	SYSTEM_SECURE = "SYSTEM_SECURE";
     /** Default Class Name implementing SecureInterface	*/
-    public static final String	SYSTEM_SECURE_DEFAULT = "com.gba.eugene.util.Secure";
+    public static final String	SYSTEM_SECURE_DEFAULT = "com.gba.eugene.kernel.util.Secure";
 
     /** Clear Text Indicator xyz	*/
     public static final String		CLEARVALUE_START = "xyz";

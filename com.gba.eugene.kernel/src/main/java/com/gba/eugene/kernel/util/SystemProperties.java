@@ -81,7 +81,7 @@ public final class SystemProperties implements Serializable {
         if(env == null || env.trim().isEmpty()){
             String current = isClient() ? System.getProperty("user.home") : System.getProperty("user.dir");
 
-            if (current != null && current.trim().isEmpty()){
+            if (current != null && !current.trim().isEmpty()){
                 File file = new File(current);
                 if (file.exists() && file.canWrite())
                     env = current;
@@ -93,6 +93,16 @@ public final class SystemProperties implements Serializable {
 
         return env;
     } // getSystemHome
+
+    /**
+     *  Set System Home
+     *  @param systemHome SYSTEM_HOME
+     */
+    public static void setSystemHome (String systemHome)
+    {
+        if (systemHome != null && !systemHome.isEmpty())
+            System.setProperty (SYSTEM_HOME, systemHome);
+    }   //  setAdempiereHome
 
     public static String getFileName(boolean tryUserHome){
         if (SystemConstants.getPropertyFile() != null)

@@ -1,5 +1,6 @@
 package com.gba.eugene.kernel.util;
 
+import com.gba.eugene.kernel.App;
 import com.gba.eugene.kernel.db.Database;
 import com.gba.eugene.kernel.db.DatabaseConnection;
 import com.gba.eugene.kernel.db.ProxyFactory;
@@ -13,6 +14,7 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 public final class DB {
     /** Logger */
@@ -96,6 +98,53 @@ public final class DB {
             success = false;
         }
         return success;
+    }
+
+    /**
+     *  Check Build Version of Database against running client
+     *  @param ctx context
+     *  @return true if Database version (date) is the same
+     */
+    public static boolean isBuildOK (Properties ctx)
+    {
+        //  Check Build
+        String buildClient = App.getVersion();
+        String buildDatabase = "";
+        boolean failOnBuild = false;
+        String sql = "SELECT LastBuildInfo, IsFailOnBuildDiffer FROM AD_System";
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try
+        {
+            pstmt = prepareStatement(sql, null);
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                buildDatabase = rs.getString(1);
+                failOnBuild = rs.getString(2).equals("Y");
+            }
+        }
+        catch (SQLException e)
+        {
+            log.error("Problem with AD_System Table - Run system.sql script - " + e.toString());
+            return false;
+        }
+        finally
+        {
+            close(rs);
+            close(pstmt);
+            rs= null;
+            pstmt = null;
+        }
+        log.info("Build DB=" + buildDatabase);
+        log.info("Build Cl=" + buildClient);
+        //  Identical DB version
+        if (buildClient.equals(buildDatabase))
+            return true;
+
+        if (! failOnBuild) {
+            return true;
+        }
+        return false;
     }
 
     /**

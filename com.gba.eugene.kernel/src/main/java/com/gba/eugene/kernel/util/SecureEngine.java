@@ -19,7 +19,7 @@ public class SecureEngine {
 
     private SecureEngine(String className){
         String realClass = className;
-        if (realClass == null || realClass.length() == 0)
+        if (realClass == null || realClass.isEmpty())
             realClass = SecureInterface.SYSTEM_SECURE_DEFAULT;
         Exception cause = null;
         try
