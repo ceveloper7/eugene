@@ -54,7 +54,7 @@ public class StatementProxy implements InvocationHandler {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         String name = method.getName();
-        if (name.equals("executeQuery")|| name.equals("executeUpdate") || name.equals("execute") || name.equals("addBatch")){
+        if (args != null && args.length > 0 && (name.equals("executeQuery")|| name.equals("executeUpdate") || name.equals("execute") || name.equals("addBatch"))){
             String sql = (String)args[0];
             // p_vo.setSql(DB.getDatabase().convertStatement(sql));
             p_vo.setSql(sql);

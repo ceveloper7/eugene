@@ -74,6 +74,6 @@ public final class App {
 
     public static void main(String[] args){
         startup(true);
-        System.out.println(DB.getSQLValueString(null, "SELECT Version FROM AD_System"));
+        System.out.println(DB.getSQLValueString(null, "SELECT created FROM AD_User_Roles WHERE ad_user_id=50001"));
     }
 }
